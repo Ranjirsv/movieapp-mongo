@@ -27,38 +27,6 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(express.static(path.join(__dirname, 'public/html')));
 
-// express session
-app.use(session({
-    secret: 'secret',
-    saveUninitialized: true,
-    resave: true
-}));
-
-// passport initialize
-app.use(passport.initialize());
-app.use(passport.session());
-
-// express validator
-app.use(expressValidator({
-    errorFormatter: function(param, msg, value) {
-        var namespace = param.split('.'),
-            root = namespace.shift(),
-            formParam = root;
-
-        while (namespace.length) {
-            formParam += '[' + namespace.shift() + ']';
-        }
-        return {
-            param: formParam,
-            msg: msg,
-            value: value
-        };
-    }
-}));
-
-// connect flash
-app.use(flash());
-
 //global variables
 app.use(function(req, res, next) {
     res.locals.success_msg = req.flash('success_msg');
