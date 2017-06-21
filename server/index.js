@@ -1,9 +1,22 @@
-let express = require('express'),
-    path = require('path');
-    favicon = require('serve-favicon'),
-    logger = require('morgan'),
-    bodyParser = require('body-parser'),
-    routes = require('./routes/index');
+var express = require('express');
+ var path = require('path');
+ var cookieParser=require('cookie-parser');
+ var expressHandlebars=require('express-handlebars');
+ var expressValidator=require('express-validator');
+ var flash=require('connect-flash');
+ var session=require('express-session');
+ var passport=require('passport');
+ var localStrategy=require('passport-local').Strategy;
+ var mongo=require('mongodb');
+ var mongoose=require('mongoose');
+ mongoose.Promise = global.Promise;
+ mongoose.connect('mongodb://localhost:27017/mydb');
+ var db=mongoose.connection;
+  var favicon = require('serve-favicon');
+    var logger = require('morgan');
+    var bodyParser = require('body-parser');
+    
+     var routes = require('./routes/index');
 
 const app = express();
 
@@ -15,7 +28,47 @@ app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public/html')));
+
+// express session
+app.use(session({
+    secret:'secret',
+    saveUninitialized:true,
+    resave:true
+}));
+
+// passport initialize
+app.use(passport.initialize());
+app.use(passport.session());
+
+// express validator
+app.use(expressValidator({
+  errorFormatter: function(param, msg, value) {
+      var namespace = param.split('.')
+      , root    = namespace.shift()
+      , formParam = root;
+
+    while(namespace.length) {
+      formParam += '[' + namespace.shift() + ']';
+    }
+    return {
+      param : formParam,
+      msg   : msg,
+      value : value
+    };
+  }
+}));
+
+// connect flash
+app.use(flash());
+
+//global variables
+app.use(function(req,res,next){
+    res.locals.success_msg=req.flash('success_msg');
+    res.locals.error_msg=req.flash('error-msg');
+    res.locals.error=req.flash('error');
+    next(); 
+});
 
 app.use('/', routes);
 
@@ -50,5 +103,8 @@ app.use(function(err, req, res, next) {
     });
 });
 
+app.listen(5000,function(){
+    console.log('server started');
+});
 
 module.exports = app;
